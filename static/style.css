@@ -1,0 +1,280 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+* {
+    font-family: 'Poppins', sans-serif;
+    margin: 0%;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #0a3b46d0;
+}
+.nav-link {
+    position: relative;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px 12px;
+    transition: 0.3s ease;
+}
+
+/* Dashboard stylling */
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #273F4F;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: #333;
+    font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 25px;
+    margin-top: 95px;
+}
+
+.dashboard-card {
+    flex: 1;
+    min-width: 160px;
+    background-color: #273F4F;
+    color: white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-card h4 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: white;
+    font-weight: 600;
+}
+
+.dashboard-card p {
+    font-size: 18px;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.dashboard-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 10px;
+    margin-top: 5px;
+}
+
+.dashboard-left,
+.dashboard-right {  
+    flex: 1;
+    /* min-height: 200px; */
+    background-color: #57575700;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0);
+    font-family: 'Poppins', sans-serif;
+    margin-top: -40px;
+}
+
+.dashboard-left h4,
+.dashboard-right h4 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: white;
+    font-weight: 600;
+}
+
+.dashboard-left p,
+.dashboard-right p {
+    color: white;
+    font-size: 15px;
+}
+
+
+.dashboard-left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.left-inner-box {
+    background-color: #273F4F;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.084);
+    /* min-height: 400px; */
+}
+
+.left-inner-box h4 {
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+}
+
+.left-inner-box p {
+    color: #666;
+    font-size: 14px;
+}
+
+.dashboard-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.right-inner-box {
+    background-color: #273F4F;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    min-height: 200px;  /* Adjust the height as needed */
+    color: white;
+}
+
+.right-inner-box h4 {
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+}
+
+.right-inner-box p {
+    color: white;
+    font-size: 14px;
+}
+
+/* reports */
+
+.reports-container {
+    margin-top: 100px;
+    padding: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.metrics-row, .filters-row, .three-boxes-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    
+}
+.metrics-row{
+    color: white;
+    gap: 20px;
+    border-radius: 15px;
+    padding: 10px;
+    background-color:#273F4F;
+}
+.metric-box{
+    width: 250px;
+    /* border: 2px solid; */
+    font-size: 20px;
+    padding: 5px;
+}
+
+.analytics-box {
+    background: #273F4F;
+    padding: 15px 25px;
+    border-radius: 10px;
+    flex: 1;
+    /* text-align: center; */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.analytics-box h4{
+    color: white;
+}
+
+.three-boxes-row {
+    height: 300px;
+}
+.apply-button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    align-self: center;
+    white-space: nowrap;
+    margin-left: 19%;
+}
+
+.apply-button:hover {
+    background: #0056b3;
+}
+
+.dropdown {
+    flex: 1;
+    min-width: 200px;
+}
+.dropdown-item{
+    padding: 10px;
+}
+
+.dropdown-label{
+    color: white;
+}
+.table-section {
+    color: black;
+    margin-top: 70px;
+    background-color: #273F4F;
+    border-radius: 15px;
+    padding: 10px;
+}
+.dropdown .Select-control {
+    background-color: transparent !important;
+    color: white;
+    border: 1px solid #ccc; /* Optional: You can adjust/remove border */
+    box-shadow: none !important;  /* Removes inner shadow if any */
+}
+.dropdown .Select-menu-outer {
+    background-color: #273F4F !important;  /* You can change this too if needed */
+    color: white;
+}
+.dropdown .Select-placeholder{
+    color: white;
+}
+.dropdown input {
+    color: white !important;  /* Replace with your desired color */
+}
+.dropdown .Select-value-label {
+    color: white !important;
+}
+.filters-row{
+    border-radius: 15px;
+    background-color: #273F4F;
+    padding: 10px;
+}
+
+.metric-box p{
+    color: #007bff;
+    font-weight: 600;
+    padding: 5px;
+}
+/* @media (max-width: 768px) {
+    .metrics-row, .filters-row, .three-boxes-row {
+        flex-direction: column;
+    }
+} */

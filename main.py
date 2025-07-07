@@ -1,0 +1,96 @@
+from flask import Flask, render_template, request, redirect, session
+import dash
+from dash import html, dcc, Input, Output, State
+
+from dashboard.dashboard_layout import create_dashboard_layout
+from dashboard.home import home_layout
+from dashboard.reports import reports_layout
+from dashboard.trainee import trainee_layout
+from dashboard.module import module_layout
+from dashboard.certification import certificate_layout
+from dashboard.setting import setting_layout
+
+# Flask Setup
+server = Flask(__name__)
+server.secret_key = 'your_secret_key_here'
+
+@server.route('/')
+def index():
+    return redirect('/login')
+
+@server.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'praveen' and password == 'password123':
+            session['logged_in'] = True
+            session['username'] = username 
+            return redirect('/dashboard/')
+        else:
+            return render_template('login.html', error="Invalid credentials")
+    return render_template('login.html')
+
+@server.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect('/login')
+
+@server.before_request
+def restrict_dashboard():
+    if request.path.startswith('/dashboard') and not session.get('logged_in'):
+        return redirect('/login')
+
+# Dash App Integration
+app = dash.Dash(__name__, server=server, url_base_pathname='/dashboard/', external_stylesheets=['/static/style.css'], suppress_callback_exceptions=True )
+app.layout = create_dashboard_layout
+
+# Page Routing Callback
+@app.callback(
+    Output('page-content', 'children'),
+    Input('url', 'pathname')
+)
+def display_page(pathname):
+    if pathname in ('/dashboard/', '/dashboard/home'):
+        return home_layout()
+    elif pathname == '/dashboard/reports':
+        return reports_layout()
+    elif pathname == '/dashboard/trainee-management':
+        return trainee_layout()
+    elif pathname == '/dashboard/module-management':
+        return module_layout()
+    elif pathname == '/dashboard/certification':
+        return certificate_layout()
+    elif pathname == '/dashboard/settings':
+        return setting_layout()
+    elif pathname == '/logout':
+        return dcc.Location(pathname='/login', id='redirect')
+    else:
+        return html.H2("404 - Page Not Found")
+
+# ✅ Updated callback to auto-update charts on dropdown change (no button needed)
+@app.callback(
+    [
+        Output('bar-chart', 'figure'),
+        Output('pie-chart', 'figure'),
+    ],
+    [
+        Input('date-dropdown', 'value'),
+        Input('dept-dropdown', 'value'),
+        Input('module-dropdown', 'value'),
+        Input('status-dropdown', 'value'),
+    ]
+)
+def update_charts(date, department, module, status):
+    from dashboard.reports import get_data
+    try:
+        # Call get_data with whatever filters are selected
+        data = get_data(department=department, module=module, status=status, date=date)
+        return data['training_by_month_fig'], data['pie_chart']
+    except Exception as e:
+        # In case of error, log it and return empty figures
+        print(f"Error in update_charts: {e}")
+        return {}, {}
+
+if __name__ == '__main__':
+    server.run(debug=True)
