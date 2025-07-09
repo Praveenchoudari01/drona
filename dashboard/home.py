@@ -180,7 +180,7 @@ def perform_analytics():
         'total_viewers': total_viewers,
         'revenue': None,  # Placeholder
         'sessions': total_traings,  # Placeholder
-        'conversion_rate': certified_viewers,  # Placeholder
+        'certified_viewers': certified_viewers,  # Placeholder
         'churn_rate': None,  # Placeholder
         'failure': failure_percentage,
         'module_stats': module_stats,
@@ -333,7 +333,7 @@ def home_layout():
 
             html.Div([
                 html.H4("Certified Viewers"),
-                html.P(display_value(analytics_data['conversion_rate']))
+                html.P(display_value(analytics_data['certified_viewers']))
             ], className='dashboard-card'),
 
             html.Div([
