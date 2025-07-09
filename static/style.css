@@ -196,10 +196,11 @@ body {
 
 .analytics-box {
     background: #273F4F;
+    border: 3px solid white;
     padding: 15px 25px;
     border-radius: 10px;
     flex: 1;
-    /* text-align: center; */
+    text-align: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 .analytics-box h4{

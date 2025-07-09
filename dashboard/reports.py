@@ -353,7 +353,7 @@ def reports_layout():
                     id='bar-chart',
                     figure=analytic_data['training_by_month_fig'],
                     config={'displayModeBar': False},
-                    style={'height': '250px'}
+                    style={'height': '300px'}
                 )
             ], className='analytics-box'),
             html.Div([
@@ -370,7 +370,7 @@ def reports_layout():
                 dcc.Graph(
                     id='failure-table',
                     figure=analytic_data['failure_table_fig'],
-                    style={'borderRadius': '10px', 'width': '450px'},
+                    style={'borderRadius': '10px', 'width': '450px','height': '300px'},
                     config={'displayModeBar': False}
                 )
             ], className='analytics-box')
