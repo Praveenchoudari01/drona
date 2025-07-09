@@ -111,6 +111,26 @@ def toggle_certified_modal(open_click, close_click):
     else:
         return {'display': 'none'}
 
+@app.callback(
+    Output("modal-failure", "is_open"),
+    [Input("card-failure", "n_clicks"), Input("close-modal-failure", "n_clicks")],
+    [State("modal-failure", "is_open")]
+)
+def toggle_modal(card_click, close_click, is_open):
+    if card_click or close_click:
+        return not is_open
+    return is_open
+
+@app.callback(
+    Output("modal-viewers", "is_open"),
+    [Input("card-viewers", "n_clicks"), Input("close-modal-viewers", "n_clicks")],
+    [State("modal-viewers", "is_open")],
+)
+def toggle_modal_viewers(open_click, close_click, is_open):
+    if open_click or close_click:
+        return not is_open
+    return is_open
+
 
 if __name__ == '__main__':
     server.run(debug=True)

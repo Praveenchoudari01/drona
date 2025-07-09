@@ -212,6 +212,43 @@ def perform_analytics():
         fill_value=0
     ).reset_index()
 
+
+    failure_rate_query = """
+    SELECT 
+        m.module_name,
+        CASE 
+            WHEN COUNT(vs.id) = 0 THEN NULL
+            ELSE ROUND(
+                SUM(CASE WHEN vs.status = 'FAILED' THEN 1 ELSE 0 END) * 100 / 
+                COUNT(vs.id), 
+                4
+            )
+        END AS failure_rate
+    FROM 
+        module m
+    LEFT JOIN 
+        viewer_session vs 
+        ON m.id = vs.last_module_id
+    GROUP BY 
+        m.module_name
+    ORDER BY 
+        failure_rate DESC;
+    """
+    failure_rate_by_module = pd.read_sql(failure_rate_query, con=engine)
+
+    viewer_query = """
+        SELECT v.id, 
+            v.name, 
+            v.email, 
+            v.mobile, 
+            d.name AS department_name, 
+            v.is_active
+        FROM viewer v
+        LEFT JOIN department d ON v.department_id = d.id
+        ORDER BY v.id;
+    """
+    viewer_details = pd.read_sql(viewer_query, con=engine)
+
     return {
         'total_viewers': total_viewers,
         'revenue': None,  # Placeholder
@@ -226,6 +263,8 @@ def perform_analytics():
 
         #modal data
         'certified_viewers_details': certified_viewers_details,
+        'failure_rate_by_module': failure_rate_by_module,
+        'viewer_details': viewer_details,
     }
 
 
@@ -238,6 +277,9 @@ def home_layout():
 
     #modal data
     certified_viewers_details = analytics_data['certified_viewers_details']
+    failure_rate_by_module = analytics_data['failure_rate_by_module']
+    viewer_details = analytics_data['viewer_details']
+
 
     
     def display_value(value):
@@ -368,7 +410,7 @@ def home_layout():
             html.Div([
                 html.H4("Total Viewers"),
                 html.P(display_value(analytics_data['total_viewers']))
-            ], className='dashboard-card'),
+            ], className='dashboard-card', id='card-viewers', n_clicks=0, style={'cursor': 'pointer'}),
 
             html.Div([
                 html.H4("Completed Trainings"),
@@ -378,12 +420,12 @@ def home_layout():
             html.Div([
                 html.H4("Certified Viewers"),
                 html.P(display_value(analytics_data['certified_viewers']))
-            ], className='dashboard-card', id='card-certified'),
+            ], className='dashboard-card', id='card-certified', n_clicks=0, style={'cursor': 'pointer'}),
 
             html.Div([
                 html.H4("Avg. Failure Rate"),
                 html.P(display_value(analytics_data['failure']))
-            ], className='dashboard-card'),
+            ], className='dashboard-card', id='card-failure', n_clicks=0, style={'cursor': 'pointer'}),
         ], className='dashboard-row'),
         
         html.Div([
@@ -440,7 +482,7 @@ def home_layout():
                                     )
                                 )],
                                 layout=dict(
-                                    margin=dict(l=0, r=0, t=0, b=0),
+                                    margin=dict(l=10, r=10, t=10, b=0),
                                     autosize=True,
                                     paper_bgcolor='rgba(0,0,0,0)',  # Transparent outside background
                                     plot_bgcolor='rgba(0,0,0,0)'   # Transparent plot area
@@ -451,7 +493,95 @@ def home_layout():
                     html.Button("Close", id='close-modal', n_clicks=0, className='modal-close-btn')
                 ], className='modal-content')
             ], id='certified-modal', className='modal', style={'display': 'none'}),
-            
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Avg. Failure Rate Detail")),
+                    dbc.ModalBody(
+                        dcc.Graph(
+                            figure=go.Figure(data=[go.Table(
+                                header=dict(
+                                    values=["Module Name", "Failure Rate (%)"],
+                                    fill_color='rgba(0,0,0,1)',
+                                    align='center',
+                                    font=dict(color='white', size=14),
+                                    line_color='white',
+                                    height=40
+                                ),
+                                cells=dict(
+                                    values=[
+                                        failure_rate_by_module['module_name'],
+                                        failure_rate_by_module['failure_rate'],
+                                    ],
+                                    fill_color='rgba(0,0,0,0)',
+                                    align='center',
+                                    line_color='white',
+                                    font=dict(color='white', size=12),
+                                    height=30
+                                )
+                            )],
+                            layout=dict(
+                                margin=dict(l=10, r=10, t=10, b=0),
+                                # autosize=True,
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                plot_bgcolor='rgba(0,0,0,0)'
+                            )),
+                            config={'displayModeBar': False},
+                            style={'width': '100%', 'height': '200px'}
+                        )
+                    ),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close-modal-failure", className="ms-auto", n_clicks=0)
+                    ),
+                ],
+                id="modal-failure",
+                is_open=False,
+            ),
+            dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle("Total Viewers Details")),
+                dbc.ModalBody(
+                    dcc.Graph(
+                        figure=go.Figure(data=[go.Table(
+                            header=dict(
+                                values=["ID", "Name", "Email", "Mobile", "Department"],
+                                fill_color='rgba(0,0,0,1)',
+                                align='center',
+                                font=dict(color='white', size=14),
+                                line_color='white',
+                                height=40
+                            ),
+                            cells=dict(
+                                values=[
+                                    viewer_details['id'],
+                                    viewer_details['name'],
+                                    viewer_details['email'],
+                                    viewer_details['mobile'],
+                                    viewer_details['department_name'],
+                                ],
+                                fill_color='rgba(0,0,0,0)',
+                                align='center',
+                                line_color='white',
+                                font=dict(color='white', size=12),
+                                height=30
+                            )
+                        )],
+                        layout=dict(
+                            margin=dict(l=10, r=10, t=10, b=0),
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)'
+                        )),
+                        config={'displayModeBar': False},
+                        style={'width': '100%', 'height': '300px'}
+                    )
+                ),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close-modal-viewers", className="ms-auto", n_clicks=0)
+                ),
+            ],
+            id="modal-viewers",
+            is_open=False,
+        )
+
         ], className='dashboard-bottom'),
 
     ], id="dashboard-container")
