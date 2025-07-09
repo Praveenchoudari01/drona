@@ -2,6 +2,7 @@ from dash import html, dcc
 import pandas as pd
 from sqlalchemy import create_engine
 import plotly.graph_objs as go
+import dash_bootstrap_components as dbc
 
 
 def perform_analytics():
@@ -189,6 +190,7 @@ def perform_analytics():
         'failure_questions': failure_questions
     }
 
+
 def home_layout():
     analytics_data = perform_analytics()
     module_table = analytics_data['module_stats']
@@ -334,7 +336,7 @@ def home_layout():
             html.Div([
                 html.H4("Certified Viewers"),
                 html.P(display_value(analytics_data['certified_viewers']))
-            ], className='dashboard-card'),
+            ], className='dashboard-card', id='card-certified'),
 
             html.Div([
                 html.H4("Avg. Failure Rate"),
@@ -373,5 +375,12 @@ def home_layout():
                 #     html.P("Additional analytics or details.")
                 # ], className='right-inner-box'),
             ], className='dashboard-right'),
+            html.Div([
+                html.Div([
+                    html.H4("Certified Viewers Count"),
+                    html.P(f"{analytics_data['certified_viewers']} Certified Viewers"),  # Show count
+                    html.Button("Close", id='close-modal', n_clicks=0, className='modal-close-btn')
+                ], className='modal-content')
+            ], id='certified-modal', className='modal', style={'display': 'none'}),
         ], className='dashboard-bottom')
     ])

@@ -91,6 +91,26 @@ def update_charts(date, department, module, status):
         # In case of error, log it and return empty figures
         print(f"Error in update_charts: {e}")
         return {}, {}
+    
+@app.callback(
+    Output('certified-modal', 'style'),
+    [Input('card-certified', 'n_clicks'),
+     Input('close-modal', 'n_clicks')],
+    prevent_initial_call=True
+)
+def toggle_certified_modal(open_click, close_click):
+    ctx = dash.callback_context
+
+    if not ctx.triggered:
+        raise dash.exceptions.PreventUpdate
+    
+    trigger = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    if trigger == 'card-certified':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 if __name__ == '__main__':
     server.run(debug=True)
