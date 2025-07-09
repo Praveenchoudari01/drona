@@ -176,6 +176,41 @@ def perform_analytics():
     """
     failure_questions = pd.read_sql(failure_query, con=engine)
 
+    #modal data for the certified viewers
+    query = """
+            SELECT 
+                v.id AS viewer_id,
+                v.name AS viewer_name,
+                m.module_name,
+                COUNT(*) AS cleared_attempts
+            FROM (
+                SELECT 
+                    viewer_id, 
+                    module_id, 
+                    attempt_no,
+                    COUNT(question_id) AS total_questions,
+                    COUNT(level_id) AS total_levels
+                FROM viewer_answers
+                GROUP BY viewer_id, module_id, attempt_no
+            ) AS attempt_summary
+            JOIN viewer v ON attempt_summary.viewer_id = v.id
+            JOIN module m ON attempt_summary.module_id = m.id
+            WHERE 
+                (attempt_summary.module_id = 1 AND total_questions >= 10 AND total_levels >= 3)
+                OR
+                (attempt_summary.module_id = 2 AND total_questions >= 16 AND total_levels >= 6)
+            GROUP BY v.id, v.name, m.module_name
+            ORDER BY v.id, m.module_name;
+        """
+    df = pd.read_sql(query, con=engine)
+
+    # Pivot the data to show module names as columns
+    certified_viewers_details = df.pivot_table(
+        index=['viewer_id', 'viewer_name'],
+        columns='module_name',
+        values='cleared_attempts',
+        fill_value=0
+    ).reset_index()
 
     return {
         'total_viewers': total_viewers,
@@ -187,7 +222,10 @@ def perform_analytics():
         'module_stats': module_stats,
         'viewer_table': viewer_table,
         'module_training_counts': module_training_counts,
-        'failure_questions': failure_questions
+        'failure_questions': failure_questions,
+
+        #modal data
+        'certified_viewers_details': certified_viewers_details,
     }
 
 
@@ -197,6 +235,10 @@ def home_layout():
     viewer_table = analytics_data['viewer_table']
     module_training_counts = analytics_data['module_training_counts']
     failure_questions = analytics_data['failure_questions']
+
+    #modal data
+    certified_viewers_details = analytics_data['certified_viewers_details']
+
     
     def display_value(value):
         return value if value is not None else "Loading..."
@@ -377,10 +419,39 @@ def home_layout():
             ], className='dashboard-right'),
             html.Div([
                 html.Div([
-                    html.H4("Certified Viewers Count"),
-                    html.P(f"{analytics_data['certified_viewers']} Certified Viewers"),  # Show count
+                    html.H4("Certified Viewers Count By Modules"),
+                            dcc.Graph(
+                                figure=go.Figure(data=[go.Table(
+                                    header=dict(
+                                        values=list(certified_viewers_details.columns),
+                                        fill_color='rgba(0,0,0,1)',
+                                        align='center',
+                                        font=dict(color='white', size=14),
+                                        line_color='white',
+                                        height=40
+                                    ),
+                                    cells=dict(
+                                        values=[certified_viewers_details[col] for col in certified_viewers_details.columns],
+                                        fill_color='rgba(0,0,0,0)',
+                                        align='center',
+                                        line_color='white',
+                                        font=dict(color='white', size=12),
+                                        height=30
+                                    )
+                                )],
+                                layout=dict(
+                                    margin=dict(l=0, r=0, t=0, b=0),
+                                    autosize=True,
+                                    paper_bgcolor='rgba(0,0,0,0)',  # Transparent outside background
+                                    plot_bgcolor='rgba(0,0,0,0)'   # Transparent plot area
+                                )),
+                                config={'displayModeBar': False},
+                                style={'width': '100%', 'height': '100%'}
+                            ),
                     html.Button("Close", id='close-modal', n_clicks=0, className='modal-close-btn')
                 ], className='modal-content')
             ], id='certified-modal', className='modal', style={'display': 'none'}),
-        ], className='dashboard-bottom')
-    ])
+            
+        ], className='dashboard-bottom'),
+
+    ], id="dashboard-container")
