@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session
 import dash
 from dash import html, dcc, Input, Output, State
+import json
 
 from dashboard.dashboard_layout import create_dashboard_layout
 from dashboard.home import home_layout
@@ -14,6 +15,10 @@ from dashboard.setting import setting_layout
 server = Flask(__name__)
 server.secret_key = 'your_secret_key_here'
 
+# Load users from JSON
+with open('users.json') as f:
+    users = json.load(f)
+
 @server.route('/')
 def index():
     return redirect('/login')
@@ -23,12 +28,13 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == 'praveen' and password == 'password123':
-            session['logged_in'] = True
-            session['username'] = username 
-            return redirect('/dashboard/')
-        else:
-            return render_template('login.html', error="Invalid credentials")
+        # Check against JSON data
+        for user in users:
+            if user['username'] == username and user['password'] == password:
+                session['logged_in'] = True
+                session['username'] = username
+                return redirect('/dashboard/')
+        return render_template('login.html', error="Invalid credentials")
     return render_template('login.html')
 
 @server.route('/logout')
