@@ -249,6 +249,18 @@ def perform_analytics():
     """
     viewer_details = pd.read_sql(viewer_query, con=engine)
 
+    training_query = """
+        SELECT 
+            v.id AS viewer_id,
+            v.name AS viewer_name,
+            count(vs.training_session_id) AS total_trainings
+        FROM viewer v
+        LEFT JOIN viewer_session vs ON v.id = vs.viewer_id
+        GROUP BY v.id, v.name;
+
+    """
+    training_details = pd.read_sql(training_query, con=engine)
+
     return {
         'total_viewers': total_viewers,
         'revenue': None,  # Placeholder
@@ -265,6 +277,7 @@ def perform_analytics():
         'certified_viewers_details': certified_viewers_details,
         'failure_rate_by_module': failure_rate_by_module,
         'viewer_details': viewer_details,
+        'training_details': training_details
     }
 
 
@@ -279,6 +292,7 @@ def home_layout():
     certified_viewers_details = analytics_data['certified_viewers_details']
     failure_rate_by_module = analytics_data['failure_rate_by_module']
     viewer_details = analytics_data['viewer_details']
+    training_details = analytics_data['training_details']
 
 
     
@@ -415,7 +429,7 @@ def home_layout():
             html.Div([
                 html.H4("Completed Trainings"),
                 html.P(display_value(analytics_data['sessions']))
-            ], className='dashboard-card'),
+            ], className='dashboard-card', id='card-trainings', n_clicks=0, style={'cursor': 'pointer'}),
 
             html.Div([
                 html.H4("Certified Viewers"),
@@ -459,10 +473,14 @@ def home_layout():
                 #     html.P("Additional analytics or details.")
                 # ], className='right-inner-box'),
             ], className='dashboard-right'),
-            html.Div([
-                html.Div([
-                    html.H4("Certified Viewers Count By Modules"),
-                            dcc.Graph(
+
+            #drill downs modals
+            #Certified viewers drilldown modal
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Certified Viewers Count By Modules")),
+                    dbc.ModalBody(
+                        dcc.Graph(
                                 figure=go.Figure(data=[go.Table(
                                     header=dict(
                                         values=list(certified_viewers_details.columns),
@@ -488,11 +506,19 @@ def home_layout():
                                     plot_bgcolor='rgba(0,0,0,0)'   # Transparent plot area
                                 )),
                                 config={'displayModeBar': False},
-                                style={'width': '100%', 'height': '100%'}
-                            ),
-                    html.Button("Close", id='close-modal', n_clicks=0, className='modal-close-btn')
-                ], className='modal-content')
-            ], id='certified-modal', className='modal', style={'display': 'none'}),
+                                style={'width': '100%', 'height': '250px', 'overflowY': 'auto'},
+                                
+                            )
+                    ),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close-modal-certified", className="ms-auto", n_clicks=0)
+                    ),
+                ],
+                id="modal-certified",
+                is_open=False,
+            ),
+
+            #Avg Failure rate drilldown modal
             dbc.Modal(
                 [
                     dbc.ModalHeader(dbc.ModalTitle("Avg. Failure Rate Detail")),
@@ -526,7 +552,7 @@ def home_layout():
                                 plot_bgcolor='rgba(0,0,0,0)'
                             )),
                             config={'displayModeBar': False},
-                            style={'width': '100%', 'height': '200px'}
+                            style={'width': '100%', 'height': '250px'}
                         )
                     ),
                     dbc.ModalFooter(
@@ -536,51 +562,97 @@ def home_layout():
                 id="modal-failure",
                 is_open=False,
             ),
+
+            # viewer details drilldown modal
             dbc.Modal(
-            [
-                dbc.ModalHeader(dbc.ModalTitle("Total Viewers Details")),
-                dbc.ModalBody(
-                    dcc.Graph(
-                        figure=go.Figure(data=[go.Table(
-                            header=dict(
-                                values=["ID", "Name", "Email", "Mobile", "Department"],
-                                fill_color='rgba(0,0,0,1)',
-                                align='center',
-                                font=dict(color='white', size=14),
-                                line_color='white',
-                                height=40
-                            ),
-                            cells=dict(
-                                values=[
-                                    viewer_details['id'],
-                                    viewer_details['name'],
-                                    viewer_details['email'],
-                                    viewer_details['mobile'],
-                                    viewer_details['department_name'],
-                                ],
-                                fill_color='rgba(0,0,0,0)',
-                                align='center',
-                                line_color='white',
-                                font=dict(color='white', size=12),
-                                height=30
-                            )
-                        )],
-                        layout=dict(
-                            margin=dict(l=10, r=10, t=10, b=0),
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)'
-                        )),
-                        config={'displayModeBar': False},
-                        style={'width': '100%', 'height': '300px'}
-                    )
-                ),
-                dbc.ModalFooter(
-                    dbc.Button("Close", id="close-modal-viewers", className="ms-auto", n_clicks=0)
-                ),
-            ],
-            id="modal-viewers",
-            is_open=False,
-        )
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Total Viewers Details")),
+                    dbc.ModalBody(
+                        dcc.Graph(
+                            figure=go.Figure(data=[go.Table(
+                                header=dict(
+                                    values=["ID", "Name", "Email", "Department"],
+                                    fill_color='rgba(0,0,0,1)',
+                                    align='center',
+                                    font=dict(color='white', size=14),
+                                    line_color='white',
+                                    height=40
+                                ),
+                                cells=dict(
+                                    values=[
+                                        viewer_details['id'],
+                                        viewer_details['name'],
+                                        viewer_details['email'],
+                                        viewer_details['department_name'],
+                                    ],
+                                    fill_color='rgba(0,0,0,0)',
+                                    align='center',
+                                    line_color='white',
+                                    font=dict(color='white', size=12),
+                                    height=30
+                                )
+                            )],
+                            layout=dict(
+                                margin=dict(l=10, r=10, t=10, b=0),
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                plot_bgcolor='rgba(0,0,0,0)'
+                            )),
+                            config={'displayModeBar': False},
+                            style={'width': '100%', 'height': '250px'}
+                        )
+                    ),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close-modal-viewers", className="ms-auto", n_clicks=0)
+                    ),
+                ],
+                id="modal-viewers",
+                is_open=False,
+            ),
+
+            #Total traings details drilldown modal
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Total Trainings Details")),
+                    dbc.ModalBody(
+                        dcc.Graph(
+                            figure=go.Figure(data=[go.Table(
+                                columnwidth=[80, 150, 100], 
+                                header=dict(
+                                    values=["ID", "Name", "Trainings"],
+                                    fill_color='rgba(0,0,0,1)',
+                                    align='center',
+                                    font=dict(color='white', size=14),
+                                    line_color='white',
+                                    height=40
+                                ),
+                                cells=dict(
+                                    values=[
+                                        training_details['viewer_id'],
+                                        training_details['viewer_name'],
+                                        training_details['total_trainings'],
+                                    ],
+                                    fill_color='rgba(0,0,0,0)',
+                                    align='center',
+                                    line_color='white',
+                                    font=dict(color='white', size=12),
+                                    height=30
+                                )
+                            )],
+                            layout=dict(
+                                margin=dict(l=10, r=10, t=10, b=10),
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                plot_bgcolor='rgba(0,0,0,0)'
+                            )),
+                            config={'displayModeBar': False},
+                            style={'width': '100%', 'height': '250px',}
+                        )
+                    ),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close-modal-trainings", className="ms-auto", n_clicks=0)
+                    ),],
+                id="modal-trainings",
+                is_open=False,
+            ),
 
         ], className='dashboard-bottom'),
 

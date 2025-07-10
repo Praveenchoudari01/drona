@@ -93,23 +93,14 @@ def update_charts(date, department, module, status):
         return {}, {}
     
 @app.callback(
-    Output('certified-modal', 'style'),
-    [Input('card-certified', 'n_clicks'),
-     Input('close-modal', 'n_clicks')],
-    prevent_initial_call=True
+    Output("modal-certified", "is_open"),
+    [Input("card-certified", "n_clicks"), Input("close-modal-certified", "n_clicks")],
+    [State("modal-certified", "is_open")],
 )
-def toggle_certified_modal(open_click, close_click):
-    ctx = dash.callback_context
-
-    if not ctx.triggered:
-        raise dash.exceptions.PreventUpdate
-    
-    trigger = ctx.triggered[0]['prop_id'].split('.')[0]
-    
-    if trigger == 'card-certified':
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
 
 @app.callback(
     Output("modal-failure", "is_open"),
@@ -131,6 +122,15 @@ def toggle_modal_viewers(open_click, close_click, is_open):
         return not is_open
     return is_open
 
+@app.callback(
+    Output("modal-trainings", "is_open"),
+    [Input("card-trainings", "n_clicks"), Input("close-modal-trainings", "n_clicks")],
+    [State("modal-trainings", "is_open")],
+)
+def toggle_modal_trainings(open_click, close_click, is_open):
+    if open_click or close_click:
+        return not is_open
+    return is_open
 
 if __name__ == '__main__':
     server.run(debug=True)

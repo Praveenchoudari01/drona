@@ -317,6 +317,8 @@ body {
     text-align: center;
     margin: auto;
     margin-top: 10%;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
 }
 
 /* ✅ Close Button */
@@ -349,7 +351,7 @@ body {
     background-color: #888;
 }
 
-#close-modal-failure, #close-modal-viewers{
+#close-modal-failure, #close-modal-viewers, #close-modal-trainings, #close-modal-certified{
     padding: 10px 18px;
     border: none;
     background-color: #007BFF;
@@ -357,8 +359,9 @@ body {
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.2s ease;   
+    margin-top: 10px;
 }
 
-#close-modal-failure:hover, #close-modal-viewers:hover{
+#close-modal-failure:hover, #close-modal-viewers:hover, #close-modal-trainings:hover, #close-modal-certified:hover{
     background-color: #0056b3;
 }
