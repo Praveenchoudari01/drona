@@ -132,5 +132,58 @@ def toggle_modal_trainings(open_click, close_click, is_open):
         return not is_open
     return is_open
 
+@app.callback(
+    Output('failure-steps-chart', 'figure'),
+    Input('module-dropdown-filter', 'value'),
+)
+def update_failure_chart(module_id):
+    from dashboard.home import perform_analytics
+    import plotly.graph_objs as go
+
+    analytics_data = perform_analytics(module_id=module_id)
+    failure_questions = analytics_data['failure_questions']
+
+    if failure_questions.empty:
+        # No Data Case: Show Text Only
+        failure_fig = go.Figure()
+        failure_fig.add_annotation(
+            text="No Data Available",
+            xref="paper", yref="paper",
+            x=0.2, y=0.5, showarrow=False,
+            font=dict(size=20, color="white"),
+            align="center"
+        )
+        failure_fig.update_layout(
+            xaxis={'visible': False},
+            yaxis={'visible': False},
+            height=250,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=0, r=0, t=0, b=0)
+        )
+    else:
+        # Normal Case: Draw Bar Chart
+        failure_fig = go.Figure(go.Bar(
+            x=failure_questions['failure_count'],
+            y=failure_questions['question_abbr'],
+            text=failure_questions['failure_count'],
+            orientation='h',
+            marker_color='#FF6F61',
+            hoverinfo='skip',
+            textfont=dict(color='white')
+        ))
+
+        failure_fig.update_layout(
+            xaxis=dict(tickfont=dict(color='white')),
+            yaxis=dict(tickfont=dict(color='white')),
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=250,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+        )
+
+    return failure_fig
+
+
 if __name__ == '__main__':
     server.run(debug=True)

@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 
 
-def perform_analytics():
+def perform_analytics(module_id=None):
     # ✅ Database connection (replace with your actual credentials)
     engine = create_engine("mysql+pymysql://root:1619@localhost:3306/drona")
     
@@ -160,21 +160,25 @@ def perform_analytics():
     module_training_counts = pd.read_sql(query, con=engine)
 
     failure_query = """
-    SELECT 
-        q.id AS question_id,
-        q.question_abbr,
-        COUNT(*) AS failure_count
-    FROM viewer_answers va
-    JOIN viewer_session vs 
-        ON va.training_session_id = vs.training_session_id
-    JOIN questions q 
-        ON va.question_id = q.id
-    WHERE vs.status = 'FAILED'
-    GROUP BY q.id, q.question_abbr
-    ORDER BY failure_count DESC
-    LIMIT 5;
+            SELECT 
+                q.id AS question_id,
+                q.question_abbr,
+                m.module_name,
+                COUNT(*) AS failure_count
+            FROM viewer_answers va
+            JOIN viewer_session vs 
+                ON va.training_session_id = vs.training_session_id
+            JOIN module m
+                ON vs.last_module_id = m.id
+            JOIN questions q 
+                ON va.question_id = q.id
+            WHERE vs.status = 'FAILED'
+            AND m.id = %s  
+            GROUP BY q.id, q.question_abbr, m.module_name
+            ORDER BY failure_count DESC
+            LIMIT 5;
     """
-    failure_questions = pd.read_sql(failure_query, con=engine)
+    failure_questions = pd.read_sql(failure_query, con=engine,params=(module_id or 1,))
 
     #modal data for the certified viewers
     query = """
@@ -212,7 +216,7 @@ def perform_analytics():
         fill_value=0
     ).reset_index()
 
-
+    #modal data for the failure rate module wise
     failure_rate_query = """
     SELECT 
         m.module_name,
@@ -236,6 +240,7 @@ def perform_analytics():
     """
     failure_rate_by_module = pd.read_sql(failure_rate_query, con=engine)
 
+    #modal data for the viewer 
     viewer_query = """
         SELECT v.id, 
             v.name, 
@@ -249,6 +254,7 @@ def perform_analytics():
     """
     viewer_details = pd.read_sql(viewer_query, con=engine)
 
+    # modal data for the total trainings viewer wise 
     training_query = """
         SELECT 
             v.id AS viewer_id,
@@ -260,6 +266,11 @@ def perform_analytics():
 
     """
     training_details = pd.read_sql(training_query, con=engine)
+
+    #module dropdown
+    query = "SELECT DISTINCT id, module_name FROM module WHERE is_active = 1"
+    df = pd.read_sql(query, con=engine)
+    module_options = [{'label': row['module_name'], 'value': row['id']} for _, row in df.iterrows()]
 
     return {
         'total_viewers': total_viewers,
@@ -277,7 +288,10 @@ def perform_analytics():
         'certified_viewers_details': certified_viewers_details,
         'failure_rate_by_module': failure_rate_by_module,
         'viewer_details': viewer_details,
-        'training_details': training_details
+        'training_details': training_details,
+
+        #dropdown
+        'module_options':module_options
     }
 
 
@@ -293,6 +307,7 @@ def home_layout():
     failure_rate_by_module = analytics_data['failure_rate_by_module']
     viewer_details = analytics_data['viewer_details']
     training_details = analytics_data['training_details']
+
 
 
     
@@ -349,7 +364,7 @@ def home_layout():
             tickfont=dict(color='white')  # Y-axis text color
         ),
         margin=dict(l=20, r=20, t=40, b=20),
-        height=300,
+        height=260,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
     )
@@ -465,7 +480,14 @@ def home_layout():
 
                 html.Div([
                     html.H4("Failure Steps Insights"),
-                    dcc.Graph(figure=failure_fig, config={'displayModeBar': False}, style={'width': '100%','height': '250px'})
+                    dcc.Dropdown(
+                    id='module-dropdown-filter',
+                    options=analytics_data['module_options'],
+                    value=analytics_data['module_options'][0]['value'] if analytics_data['module_options'] else None,
+                    placeholder="Select Module",
+                    className='dropdown'
+                    ),
+                    dcc.Graph(id='failure-steps-chart', figure=failure_fig, config={'displayModeBar': False}, style={'width': '100%','height': '260px'})
                 ], className='right-inner-box'),
 
                 # html.Div([
@@ -570,6 +592,7 @@ def home_layout():
                     dbc.ModalBody(
                         dcc.Graph(
                             figure=go.Figure(data=[go.Table(
+                                columnwidth=[50, 150, 150,100], 
                                 header=dict(
                                     values=["ID", "Name", "Email", "Department"],
                                     fill_color='rgba(0,0,0,1)',
